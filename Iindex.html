@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Pretendard: LG -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <title>BIOS Unlocker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: inherit;
+        }
+
+        input,
+        button,
+        select,
+        textarea {
+            font-family: 'Pretendard Variable', Pretendard, sans-serif;
+        }
+
+        /* Pretendard 변수 폰트: 한글·영문·숫자 모두 동일 서체 */
+        @font-face {
+            font-family: 'Pretendard-fallback';
+            src: local('Apple SD Gothic Neo'), local('Noto Sans KR');
+        }
+
+        body {
+            /* Pretendard를 최우선으로, 없을 경우 시스템 폰트 순서대로 fallback */
+            font-family: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo',
+                'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            background: #f0f1f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 16px 60px;
+        }
+
+        /* ── 메인 컨테이너 ── */
+        .card {
+            background: transparent;
+            width: 100%;
+            max-width: 580px;
+            position: relative;
+        }
+
+        /* ── 닫기 버튼 ── */
+        .close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 30px;
+            height: 30px;
+            background: #eeeeee;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 13px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .2s;
+        }
+
+        .close-btn:hover {
+            background: #ddd;
+            color: #333;
+        }
+
+        /* ── 헤더 ── */
+        .header {
+            padding: 38px 24px 18px;
+            text-align: center;
+        }
+
+        .hicon {
+            width: 58px;
+            height: 58px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.13);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+        }
+
+        .hicon svg {
+            width: 28px;
+            height: 28px;
+            color: #A50034;
+        }
+
+        /* 제목: 자간 조정 */
+        .header h1 {
+            letter-spacing: -0.5px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #A50034;
+            opacity: 1;
+            font-weight: 700;
+            letter-spacing: -0.1px;
+        }
+
+        /* ── 탭 & 인증 컨테이너 ── */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 15px;
+            padding: 0 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 12px;
+            width: fit-content;
+            border: 1px solid rgba(226, 232, 240, 0.3);
+        }
+
+        /* 인증 영역 스타일 */
+        .auth-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1.5px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .auth-input {
+            width: 85px;
+            height: 32px;
+            border: none;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 0 8px;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .auth-input:focus {
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(165, 0, 52, 0.1);
+            border: 1px solid #A50034;
+        }
+
+        .auth-btn {
+            background: #A50034;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .auth-btn:hover {
+            background: #8b002c;
+        }
+
+        /* 인증 전 숨김 처리 */
+        .auth-locked {
+            pointer-events: none;
+            transition: all 0.5s;
+        }
+
+        .auth-unlocked {
+            pointer-events: auto;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: 9px;
+            border: none;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            color: #64748b;
+            background: transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            min-width: 90px;
+        }
+
+        .tab svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            opacity: 0.7;
+        }
+
+        .tab.active {
+            background: #ffffff;
+            color: #A50034;
+            box-shadow: 0 4px 12px rgba(165, 0, 52, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+            transform: scale(1.01);
+        }
+
+        .tab.active svg {
+            opacity: 1;
+        }
+
+        .tab:hover:not(.active) {
+            color: #334155;
+        }
+
+        /* ── 구분선: 연한 회색선 ── */
+        .sep {
+            height: 1px;
+            background: #e3e3e3;
+        }
+
+        /* ── 입력 영역 ── */
+        .inputs {
+            padding: 16px 20px;
+        }
+
+        /* 검색창: 흰 배경 + 테두리 */
+        .search-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 0 12px;
+            height: 44px;
+            margin-bottom: 10px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .search-row:focus-within {
+            border-color: #A50034;
+            box-shadow: 0 0 0 3px rgba(165, 0, 52, 0.1);
+        }
+
+        .search-row svg {
+            width: 15px;
+            height: 15px;
+            color: #bbb;
+            flex-shrink: 0;
+        }
+
+        .search-row input {
+            flex: 1;
+            border: none !important;
+            background: transparent !important;
+            font-size: 14px;
+            color: #1a1a1a;
+            outline: none;
+            height: 100%;
+            padding: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .field input::placeholder {
+            color: #ccc;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        #ih-model::placeholder,
+        #qt-model::placeholder {
+            color: #fca5a5;
+        }
+
+        .x-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s;
+            margin-left: 4px;
+            border-radius: 50%;
+        }
+
+        .x-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: #64748b;
+        }
+
+        .x-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* 3열 및 2열 필드 그리드 */
+        .field-grid.triple {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .field-grid.double {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .field-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        /* 입력 필드: 흰 배경으로 회색 배경과 시각적 구분 */
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 0 12px;
+            height: 44px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #1a1a1a;
+            outline: none;
+            background: #fff;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: #A50034;
+            box-shadow: 0 0 0 3px rgba(165, 0, 52, 0.1);
+        }
+
+
+
+        /* 버튼: 프리미엄 버튼 */
+        .btn {
+            width: 100%;
+            padding: 11px 14px;
+            background: #A50034;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: -0.2px;
+            box-shadow: 0 8px 16px -4px rgba(165, 0, 52, 0.3);
+            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background: #8b002c;
+            box-shadow: 0 12px 24px -5px rgba(165, 0, 52, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(.98);
+        }
+
+        /* 버튼 내 광택 효과 추가 */
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: 0.5s;
+        }
+
+        .btn:hover::after {
+            left: 120%;
+        }
+
+        /* 에러 */
+        .err {
+            background: #fff0f2;
+            border: 1px solid #ffc5cf;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #A50034;
+            margin-top: 10px;
+            display: none;
+        }
+
+
+
+
+
+        .result-inner {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        /* 모델 헤더 */
+        .mhead {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            margin-bottom: 10px;
+        }
+
+        .micon {
+            width: 38px;
+            height: 38px;
+            background: #fff0f4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .micon svg {
+            width: 20px;
+            height: 20px;
+            color: #A50034;
+        }
+
+        /* 결과 모델명: ExtraBold(800)로 강조*/
+        .mname {
+            font-size: 17px;
+            font-weight: 800;
+            color: #1a1a1a;
+            line-height: 1.2;
+            letter-spacing: -0.4px;
+        }
+
+        .msub {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 2px;
+            font-weight: 400;
+            letter-spacing: 0;
+        }
+
+        /* 성공 뱃지 */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #00875a;
+            background: #e8f5ee;
+            border-radius: 20px;
+            padding: 4px 10px;
+            margin-bottom: 12px;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #00c77f;
+            border-radius: 50%;
+        }
+
+        /* 섹션 제목 */
+        /* 섹션 제목: 영문 대문자 + 자간 넓게, Pretendard SemiBold */
+        .stitle {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #333;
+            letter-spacing: 0.8px;
+            margin: 12px 0 8px;
+            font-weight: 700;
+        }
+
+        .stitle::before {
+            content: '';
+            width: 4px;
+            height: 14px;
+            border-radius: 2px;
+        }
+
+        .stitle.red::before {
+            background: #A50034;
+        }
+
+        .stitle.gold::before {
+            background: #F5A623;
+        }
+
+        /* 정보 카드 */
+        .igrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .igrid.one {
+            grid-template-columns: 1fr;
+        }
+
+        .icard {
+            border: 1.5px solid #ebebeb;
+            border-radius: 9px;
+            padding: 10px 12px;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .icard.hl {
+            border-color: #f5c0cc;
+            background: #fff8fa;
+        }
+
+        /* 카드 라벨: 영문 소문자 -> 대문자 변환, 자간 넓게 */
+        .ilabel {
+            font-size: 10px;
+            font-weight: 700;
+            color: #c5c5c5;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        /* 카드 값: SemiBold, 가독성 향상 */
+        .ival {
+            font-size: 14px;
+            font-weight: 600;
+            color: #A50034;
+            word-break: break-all;
+            letter-spacing: -0.1px;
+        }
+
+        .ival.n {
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        /* 복사 버튼 */
+        .cpbtn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+            transition: color .2s;
+        }
+
+        .cpbtn:hover {
+            color: #A50034;
+        }
+
+        .cpbtn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* ── 푸터: 배경 투명, border 제거 ── */
+        .footer {
+            text-align: center;
+            padding: 20px 16px 16px;
+            font-size: 12px;
+            color: #c0c0c0;
+        }
+
+        /* ── 모바일 대응 (반응형) ── */
+        @media (max-width: 600px) {
+            body {
+                padding: 15px 10px 40px;
+            }
+
+            .header {
+                padding: 25px 16px 15px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .tabs {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                gap: 4px;
+            }
+
+            .tab {
+                flex: 1;
+                min-width: auto;
+                padding: 10px 6px;
+                font-size: 12px;
+            }
+
+            .auth-area {
+                width: 100%;
+                justify-content: center;
+                padding: 6px 10px;
+            }
+
+            .auth-input {
+                flex: 1;
+                width: auto;
+                min-width: 0;
+            }
+
+            .field-grid.triple,
+            .field-grid.double,
+            .igrid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .guide-box {
+                margin: 10px 10px 6px;
+                padding: 12px 15px;
+            }
+
+            .inputs {
+                padding: 12px 15px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+                padding: 16px;
+            }
+
+            .m-header h2 {
+                font-size: 17px;
+            }
+
+            .hist-table {
+                font-size: 11px;
+            }
+
+            .hist-table th,
+            .hist-table td {
+                padding: 8px 4px;
+            }
+        }
+
+        #histContent {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 헤더 초기화 버튼 */
+        .reset-link {
+            float: right;
+            font-size: 11px;
+            color: #94a3b8;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .reset-link:hover {
+            color: #ef4444;
+            border-color: #fca5a5;
+            background: #fef2f2;
+        }
+
+        .reset-link svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* 피드백 버튼 스타일 */
+        .feedback-container {
+            display: none;
+            /* 초기 상태 숨김 */
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .feedback-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: 1px solid #eee;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #ccc;
+        }
+
+        .feedback-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #ddd;
+        }
+
+        .feedback-btn.active-like {
+            background-color: #e7f3ff;
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .feedback-btn.active-dislike {
+            background-color: #fff0f0;
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        .feedback-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ── Autocomplete Styling ── */
+        .autocomplete-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1.5px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .autocomplete-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f8f9fa;
+            text-align: left;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.active {
+            background-color: #fff0f4;
+            color: #A50034;
+            font-weight: 600;
+        }
+
+        .autocomplete-highlight {
+            color: #A50034;
+            font-weight: 800;
+        }
+
+        /* ── 가이드 박스 ── */
+        .guide-box {
+            background: #fff5f7;
+            border: 1.5px solid #f5c0cc;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 20px 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .guide-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guide-title svg {
+            width: 16px;
+            height: 16px;
+            color: #A50034;
+            stroke-width: 2.5;
+        }
+
+        .guide-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 13px;
+            color: #4b5563;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .guide-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .guide-numb {
+            font-weight: 800;
+            color: #A50034;
+            font-size: 14px;
+            width: 14px;
+        }
+
+        .guide-text {
+            line-height: 1.4;
+        }
+
+        .guide-text b {
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .guide-sn {
+            font-family: inherit;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            color: #334155;
+            margin: 0 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .guide-red {
+            color: #A50034;
+            font-weight: 800;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            background: #fff0f3;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+
+        <!-- 닫기 -->
+        <button class="close-btn" onclick="window.close()">✕</button>
+
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="hicon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" />
+                </svg>
+            </div>
+            <h1>BIOS Unlocker</h1>
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 500px; margin: 0 auto;">
+                <p style="margin: 0;">📌주의 : 모든 조회이력은 자동으로 기록됩니다. 인증을 진행하세요.</p>
+                <a class="reset-link" onclick="resetInputs()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    입력 초기화
+                </a>
+            </div>
+        </div>
+
+        <!-- 탭 및 인증 바 -->
+        <div class="top-bar">
+            <div class="tabs">
+                <button class="tab active" id="btn-ih" onclick="sw('ih')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
+                    </svg>
+                    인하우스
+                </button>
+                <button class="tab" id="btn-qt" onclick="sw('qt')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                    퀀타
+                </button>
+            </div>
+
+            <!-- 인증 영역 -->
+            <div class="auth-area" id="auth-box">
+                <input type="text" id="auth-id" class="auth-input" placeholder="사번 입력">
+                <input type="text" id="auth-name" class="auth-input" placeholder="성명 입력">
+                <button class="auth-btn" onclick="checkAuth()">인증</button>
+            </div>
+        </div>
+        <div class="sep"></div>
+
+        <!-- 모델 구분 가이드 -->
+        <div class="guide-box">
+            <div class="guide-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                모델 구분 방법 (제조번호 4번째 자리 N, Q, P 표기 확인)
+            </div>
+            <div class="guide-list">
+                <div class="guide-item">
+                    <span class="guide-numb">1.</span>
+                    <span class="guide-text"><b>인하우스</b>: <span class="guide-sn">908<span
+                                class="guide-red">N</span>ZYB00084</span> (4번째 자리가 "N"인 경우)</span>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-numb">2.</span>
+                    <span class="guide-text"><b>퀀타</b> : <span class="guide-sn">105<span
+                                class="guide-red">Q</span>CLH74544</span> (4번째 자리가 "Q"인 경우)</span>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-numb">3.</span>
+                    <span class="guide-text"><b>페가트론</b>: <span class="guide-sn">103<span
+                                class="guide-red">P</span>GYZ511815</span> (4번째 자리가 "P"인 경우)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 콘텐츠 영역 (인증 전까지 잠금) -->
+        <div id="main-content" class="auth-locked">
+            <div id="pan-ih">
+                <div class="inputs">
+                    <!-- 접수번호 / 모델명 / 제조번호 -->
+                    <div class="field-grid triple">
+                        <div class="field">
+                            <label>접수번호 *</label>
+                            <input type="text" id="ih-receipt" placeholder="필수 입력" maxlength="10">
+                        </div>
+                        <div class="field" style="position: relative;">
+                            <label>모델명 *</label>
+                            <input type="text" id="ih-model" placeholder="정확한 모델을 필히 선택하세요." autocomplete="off">
+                            <div id="ih-model-list" class="autocomplete-container"></div>
+                        </div>
+                        <div class="field">
+                            <label>제조번호</label>
+                            <input type="text" id="ih-serial" placeholder=" ">
+                        </div>
+                    </div>
+
+                    <!-- 바이너리 키 선택 필드 삭제됨 (자동 매칭으로 변경) -->
+
+                    <!-- 힌트 번호 (단독 행 배치) -->
+                    <div class="field" style="margin-bottom: 15px;">
+                        <label>힌트 번호 (8자리) *</label>
+                        <input type="text" id="ih-hint" maxlength="8" placeholder="예: 1A2B3C4D">
+                    </div>
+
+
+
+                    <button class="btn" onclick="genIH()">언락 키 생성</button>
+                    <div class="err" id="ih-err"></div>
+                </div>
+                <div class="sep"></div>
+
+                <!-- 결과 -->
+                <div class="result-wrap" id="ih-res">
+                    <div class="result-inner">
+                        <div class="mhead">
+                            <div class="micon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                                    <line x1="8" y1="21" x2="16" y2="21" />
+                                    <line x1="12" y1="17" x2="12" y2="21" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="mname" id="ih-rmodel">-</div>
+                                <div class="msub">생성된 언락 키 정보입니다</div>
+                            </div>
+                        </div>
+                        <span class="badge">생성 성공</span>
+
+                        <div class="stitle red">UNLOCK KEY</div>
+                        <div class="igrid one">
+                            <div class="icard hl">
+                                <div class="ilabel">GENERATED KEY</div>
+                                <div class="ival" id="ih-rkey">-</div>
+                                <button class="cpbtn" onclick="cp('ih-rkey')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" />
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ 퀀타 패널 ══ -->
+            <div id="pan-qt" style="display:none;">
+                <div class="inputs">
+                    <!-- 접수번호 / 모델명 / 제조번호  -->
+                    <div class="field-grid triple">
+                        <div class="field">
+                            <label>접수번호 *</label>
+                            <input type="text" id="qt-receipt" placeholder="필수 입력" maxlength="10">
+                        </div>
+                        <div class="field" style="position: relative;">
+                            <label>모델명 *</label>
+                            <input type="text" id="qt-model" placeholder="추천 모델을 필히 선택하세요" autocomplete="off">
+                            <div id="qt-model-list" class="autocomplete-container"></div>
+                        </div>
+                        <div class="field">
+                            <label>제조번호</label>
+                            <input type="text" id="qt-serial" placeholder="">
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="genQT()">언락 키 확인</button>
+                    <div class="err" id="qt-err"></div>
+                </div>
+                <div class="sep"></div>
+
+                <!-- 결과 -->
+                <div class="result-wrap" id="qt-res">
+                    <div class="result-inner">
+                        <div class="mhead">
+                            <div class="micon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="M21 21l-4.35-4.35" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="mname" id="qt-rmodel">-</div>
+                                <div class="msub">퀀타 매칭 결과입니다</div>
+                            </div>
+                        </div>
+                        <span class="badge">매칭 성공</span>
+
+                        <div class="stitle red">QUANTA KEY</div>
+                        <div class="igrid one">
+                            <div class="icard hl">
+                                <div class="ilabel">MATCHED KEY</div>
+                                <div class="ival" id="qt-rkey">-</div>
+                                <button class="cpbtn" onclick="cp('qt-rkey')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" />
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- main-content end -->
+
+            <!-- 푸터 -->
+            <div class="footer">
+                <div>© 2026 Support Tool V2.0</div>
+            </div>
+        </div>
+
+
+
+        <script>
+            /* 보안 설정: 우클릭, F12, 개발자 도구 단축키 차단 */
+            document.addEventListener('contextmenu', e => e.preventDefault()); // 우클릭 방지
+            document.addEventListener('keydown', function (e) {
+                // F12 차단
+                if (e.keyCode === 123) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C 차단
+                if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+U (소스 보기) 차단
+                if (e.ctrlKey && e.keyCode === 85) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+S (저장) 차단
+                if (e.ctrlKey && e.keyCode === 83) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+
+
+            /* 외부 데이터베이스 (인증 후 구글 시트에서 로드) */
+            let keysDB = {};
+            let hexDB = {};
+            let qtDB = {};
+
+            /* 구글 스프레드시트 인증 설정 */
+            const AUTH_API_URL = "https://script.google.com/macros/s/AKfycbyM0dk1arFLjr0qv5Ef8_KA_Zv0tgTgttOg_IchS33Wtv9JwcT95QXZFIyBGshQLUQ_/exec"; // 배포 후 URL 입력 필요
+
+            let isAuthenticated = false;
+
+            async function checkAuth() {
+                const id = document.getElementById('auth-id').value.trim();
+                const name = document.getElementById('auth-name').value.trim();
+
+                if (!id || !name) {
+                    alert('사번과 성명을 모두 입력해주세요.');
+                    return;
+                }
+
+                const authBtn = document.querySelector('.auth-btn');
+                const originalText = authBtn.textContent;
+
+                try {
+                    authBtn.textContent = '인증 중...';
+                    authBtn.disabled = true;
+
+                    // 구글 시트 API 호출
+                    const response = await fetch(`${AUTH_API_URL}?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        isAuthenticated = true;
+
+                        // 구글 시트에서 가져온 DB 데이터 저장
+                        if (result.keysDB) keysDB = result.keysDB;
+                        if (result.hexDB) hexDB = result.hexDB;
+                        if (result.qtDB) qtDB = result.qtDB;
+
+                        document.getElementById('main-content').classList.remove('auth-locked');
+                        document.getElementById('main-content').classList.add('auth-unlocked');
+
+                        document.getElementById('auth-id').disabled = true;
+                        document.getElementById('auth-name').disabled = true;
+                        authBtn.textContent = '인증완료';
+                        authBtn.style.background = '#00875a';
+                        authBtn.disabled = true;
+
+                        alert(name + '님, 인증되었습니다. 데이터베이스를 성공적으로 로드했습니다.');
+                    } else {
+                        alert('사용가능한 권한이 없습니다. 사번 또는 성명을 확인하거나 수리자문에 문의바랍니다.');
+                        authBtn.textContent = originalText;
+                        authBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('인증 오류:', error);
+                    alert('인증 서버 연결에 실패했습니다. 네트워크 상태를 확인하거나 잠시 후 다시 시도해주세요.');
+                    authBtn.textContent = originalText;
+                    authBtn.disabled = false;
+                }
+            }
+
+            // 미인증 상태에서 클릭 시 안내 팝업
+            document.addEventListener('mousedown', function (e) {
+                if (!isAuthenticated) {
+                    const mainContent = document.getElementById('main-content');
+                    if (mainContent.contains(e.target) && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON')) {
+                        alert('먼저 사번과 성명 인증을 완료해 주세요.');
+                        document.getElementById('auth-id').focus();
+                    }
+                }
+            }, true);
+
+            /* 피드백 처리 */
+            function handleFeedback(panel, type) {
+                if (!isAuthenticated) {
+                    alert('인증 후에 피드백을 남길 수 있습니다.');
+                    return;
+                }
+
+                const likeBtn = document.getElementById(panel + '-btn-like');
+                const dislikeBtn = document.getElementById(panel + '-btn-dislike');
+
+                if (type === 'like') {
+                    likeBtn.classList.toggle('active-like');
+                    dislikeBtn.classList.remove('active-dislike');
+                } else {
+                    dislikeBtn.classList.toggle('active-dislike');
+                    likeBtn.classList.remove('active-like');
+                }
+            }
+
+            // 현재 선택된 피드백 상태 가져오기
+            function getCurrentFeedback() {
+                const activePanel = document.getElementById('btn-ih').classList.contains('active') ? 'ih' : 'qt';
+                if (document.getElementById(activePanel + '-btn-like').classList.contains('active-like')) return '좋아요';
+                if (document.getElementById(activePanel + '-btn-dislike').classList.contains('active-dislike')) return '싫어요';
+                return '없음';
+            }
+
+            /* 탭 전환 */
+            function sw(name) {
+                ['ih', 'qt'].forEach(n => {
+                    document.getElementById('btn-' + n).classList.toggle('active', n === name);
+                    document.getElementById('pan-' + n).style.display = n === name ? 'block' : 'none';
+                });
+                hide('ih'); hide('qt');
+            }
+
+
+
+            function hide(p) {
+                document.getElementById(p + '-err').style.display = 'none';
+                document.getElementById(p + '-res').style.display = 'none';
+            }
+
+            function showErr(p, msg) {
+                const el = document.getElementById(p + '-err');
+                el.textContent = '⚠️ ' + msg;
+                el.style.display = 'block';
+                document.getElementById(p + '-res').style.display = 'none';
+            }
+
+            /* 전체 입력 초기화 (사번, 성명 제외) */
+            function resetInputs() {
+                if (!confirm('사번/성명을 제외한 모든 입력 내용을 초기화하시겠습니까?')) return;
+
+                // 인하우스 필드
+                const ihIds = ['ih-receipt', 'ih-model', 'ih-serial', 'ih-hint'];
+                ihIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+
+                // 퀀타 필드
+                const qtIds = ['qt-receipt', 'qt-model', 'qt-serial'];
+                qtIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+
+                // 결과창 숨기기
+                hide('ih');
+                hide('qt');
+
+                alert('입력 내용이 초기화되었습니다.');
+            }
+
+            /* 입력창 지우기 */
+            function clr(id) {
+                document.getElementById(id).value = '';
+                document.getElementById(id).focus();
+            }
+
+            /* 클립보드 복사 */
+            function cp(id) {
+                const txt = document.getElementById(id).textContent;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(txt).then(() => alert('복사됨: ' + txt));
+                }
+            }
+
+            /* ── 관리자 이력 관리 기능 ── */
+            function saveLog(data) {
+                // 인증 정보 가져오기
+                const userId = document.getElementById('auth-id').value.trim();
+                const userName = document.getElementById('auth-name').value.trim();
+
+                const logEntry = {
+                    time: new Date().toLocaleString('ko-KR'),
+                    ...data,
+                    user_id: userId,
+                    user_name: userName
+                };
+
+                // 1. 기존 로컬 저장 (내 브라우저 확인용)
+                const hist = JSON.parse(localStorage.getItem('unlock_hist') || '[]');
+                hist.unshift(logEntry);
+                localStorage.setItem('unlock_hist', JSON.stringify(hist.slice(0, 500)));
+
+                // 2. 구글 시트로 전송 (대시보드용)
+                sendToGoogleSheets(logEntry);
+            }
+
+            async function sendToGoogleSheets(entry) {
+                const G_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzO-HFyLuCXt7n5LnMbOBpyrZHG0tg0KoXWqOCPXkZbBgmj3hJRaNsSMX86Xg5wqYB_Mg/exec';
+
+                // [통합 관리용 설정]
+                entry.action = 'write';
+                // 보안 토큰 
+                entry.token = atob('Ymlvc19zZWNyZXRfMjAyNg==');
+
+                const params = new URLSearchParams(entry).toString();
+                const finalUrl = `${G_SCRIPT_URL}?${params}`;
+
+                try {
+                    fetch(finalUrl, {
+                        method: 'GET',
+                        mode: 'no-cors'
+                    });
+                } catch (e) {
+                    console.error('Google Sheets 전송 오류:', e);
+                }
+            }
+
+
+
+            // 접수번호 대문자 자동 변환 및 선입력 강제 로직 (인하우스 & 퀀타 공통)
+            ['ih', 'qt'].forEach(p => {
+                const receiptEl = document.getElementById(p + '-receipt');
+                const modelEl = document.getElementById(p + '-model');
+
+                // 소문자 입력 시 대문자로 자동 변환
+                receiptEl.addEventListener('input', function () {
+                    this.value = this.value.toUpperCase();
+                });
+
+                modelEl.addEventListener('focus', function () {
+                    const val = receiptEl.value.trim();
+                    const regex = /^[A-Z0-9]{10}$/;
+                    if (!regex.test(val)) {
+                        alert('접수번호를 정확히 입력하세요.');
+                        receiptEl.focus();
+                    }
+                });
+
+                // 모델명 3자리 미만 입력 시 다음 항목 진입 차단
+                const nextIds = p === 'ih' ? ['ih-serial', 'ih-hint'] : ['qt-serial'];
+                nextIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('focus', function () {
+                            // 접수번호가 먼저 통과된 상태에서 모델명 체크
+                            if (modelEl.value.trim().length < 3) {
+                                alert('모델명을 정확히 입력하세요.');
+                                modelEl.focus();
+                            }
+                        });
+                    }
+                });
+            });
+
+            /* 인하우스 키 생성 */
+            function genIH() {
+                hide('ih');
+                const receipt = document.getElementById('ih-receipt').value.trim();
+                const model = document.getElementById('ih-model').value.trim();
+                const serial = document.getElementById('ih-serial').value.trim();
+
+                // 유효성 검사
+                const receiptRegex = /^[A-Z0-9]{10}$/;
+                if (!receiptRegex.test(receipt)) {
+                    showErr('ih', '접수번호는 영문 대문자와 숫자를 포함한 10자리여야 합니다.');
+                    return;
+                }
+                if (model.length < 3) {
+                    showErr('ih', '모델명을 정확히 입력하세요.');
+                    return;
+                }
+
+                // 1) KeysDB에서 모델명으로 HEX VALUE 찾기
+                let keyHex = null;
+                let targetKeyName = null;
+
+                // keysDB (모델명 -> Key Name) 에서 찾기
+                const uInput = model.toUpperCase().trim();
+                for (const modelKey in keysDB) {
+                    const mKey = modelKey.toUpperCase().trim();
+                    if (mKey && (uInput.includes(mKey) || mKey.includes(uInput))) {
+                        targetKeyName = keysDB[modelKey];
+                        break;
+                    }
+                }
+
+                // hexDB (Key Name -> Hex Value) 에서 찾기
+                if (targetKeyName && hexDB[targetKeyName]) {
+                    keyHex = hexDB[targetKeyName];
+                }
+
+                if (!keyHex) {
+                    showErr('ih', '해당 모델에 대한 바이너리 키(HEX VALUE)를 찾을 수 없습니다.');
+                    return;
+                }
+
+                const hintStr = document.getElementById('ih-hint').value.trim().toUpperCase();
+
+                if (hintStr.length !== 8) {
+                    showErr('ih', '힌트 번호는 정확히 8자리여야 합니다.');
+                    return;
+                }
+
+                try {
+                    /*  AES-ECB 암호화 */
+                    let a3 = new Array(8).fill(4661);
+                    a3[0] = parseInt(hintStr.substring(0, 4), 16);
+                    a3[1] = parseInt(hintStr.substring(4, 8), 16);
+
+                    let hex5 = '';
+                    for (let j = 0; j < 8; j++) {
+                        hex5 += (a3[j] & 0xFF).toString(16).padStart(2, '0');
+                        hex5 += ((a3[j] & 0xFF00) >> 8).toString(16).padStart(2, '0');
+                    }
+
+                    const enc = CryptoJS.AES.encrypt(
+                        CryptoJS.enc.Hex.parse(hex5),
+                        CryptoJS.enc.Hex.parse(keyHex),
+                        { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.NoPadding }
+                    );
+                    const ch = enc.ciphertext.toString(CryptoJS.enc.Hex);
+
+                    const a6 = new Uint8Array(16);
+                    for (let i = 0; i < 16; i++) a6[i] = parseInt(ch.substring(i * 2, i * 2 + 2), 16);
+                    for (let j = 0; j < 8; j++) a3[j] = a6[j * 2] | (a6[j * 2 + 1] << 8);
+
+                    let out = [], num = 3840, num2 = 8;
+                    for (let j = 0; j < 8; j++) {
+                        out.push(((a3[j] & num) >>> num2).toString(16).toUpperCase());
+                        num >>>= 4; num2 -= 4;
+                        if (num === 0) { num = 61440; num2 = 12; }
+                    }
+
+                    /* 결과 카드 채우기 */
+                    const finalKey = out.join('');
+                    document.getElementById('ih-rmodel').textContent = model;
+                    document.getElementById('ih-rkey').textContent = finalKey;
+                    document.getElementById('ih-res').style.display = 'block';
+
+                    /* 이력 저장 */
+                    saveLog({ type: '인하우스', model, receipt, serial, extra: hintStr, key: finalKey });
+
+                } catch (e) {
+                    showErr('ih', '처리 중 오류가 발생했습니다. 입력값을 확인해 주세요.');
+                }
+            }
+
+            /* 퀀타 키 확인 */
+            function genQT() {
+                hide('qt');
+                const receipt = document.getElementById('qt-receipt').value.trim();
+                const model = document.getElementById('qt-model').value.trim();
+                const serial = document.getElementById('qt-serial').value.trim();
+
+                // 유효성 검사
+                const receiptRegex = /^[A-Z0-9]{10}$/;
+                if (!receiptRegex.test(receipt)) {
+                    showErr('qt', '접수번호는 영문 대문자와 숫자를 포함한 10자리여야 합니다.');
+                    return;
+                }
+                if (model.length < 3) {
+                    showErr('qt', '모델명을 정확히 입력하세요.');
+                    return;
+                }
+
+
+                const prefix = model.split('-')[0].toUpperCase();
+                /* 가장 긴 키부터 매칭 */
+                const sorted = Object.keys(qtDB).sort((a, b) => b.length - a.length);
+
+                let matched = null;
+                for (const k of sorted) {
+                    if (prefix.endsWith(k.toUpperCase())) { matched = qtDB[k]; break; }
+                }
+
+                if (matched) {
+                    document.getElementById('qt-rmodel').textContent = model;
+                    document.getElementById('qt-rkey').textContent = matched;
+                    document.getElementById('qt-res').style.display = 'block';
+
+                    /* 이력 저장 */
+                    saveLog({ type: '퀀타', model, receipt, serial, extra: 'QC OK', key: matched });
+                } else {
+                    showErr('qt', `매칭 실패: '${prefix}'에 해당하는 퀀타 언락키가 등록되어 있지 않습니다.`);
+                }
+            }
+
+            /* 퀀타 모델 자동완성 로직 */
+            const qtModelInput = document.getElementById('qt-model');
+            const qtModelList = document.getElementById('qt-model-list');
+            let currentFocus = -1;
+
+            qtModelInput.addEventListener('input', function () {
+                const val = this.value.toUpperCase();
+                qtModelList.innerHTML = '';
+                currentFocus = -1;
+
+                if (!val || val.length < 1) {
+                    qtModelList.style.display = 'none';
+                    return;
+                }
+
+                // qtDB의 키값들을 기반으로 필터링
+                const models = Object.keys(qtDB).filter(m => m.toUpperCase().includes(val));
+
+                if (models.length === 0) {
+                    qtModelList.style.display = 'none';
+                    return;
+                }
+
+                models.forEach((m, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+
+                    // 매칭 부분 강조
+                    const regex = new RegExp(`(${val})`, 'gi');
+                    item.innerHTML = m.replace(regex, '<span class="autocomplete-highlight">$1</span>');
+
+                    item.addEventListener('click', function () {
+                        qtModelInput.value = m;
+                        qtModelList.style.display = 'none';
+                        // 선입력 강제 로직 등 연동을 위해 focus 이동
+                        document.getElementById('qt-serial').focus();
+                    });
+                    qtModelList.appendChild(item);
+                });
+
+                qtModelList.style.display = 'block';
+            });
+
+            // 키보드 네비게이션
+            qtModelInput.addEventListener('keydown', function (e) {
+                const items = qtModelList.getElementsByClassName('autocomplete-item');
+                if (e.keyCode === 40) { // Down
+                    currentFocus++;
+                    addActive(items);
+                } else if (e.keyCode === 38) { // Up
+                    currentFocus--;
+                    addActive(items);
+                } else if (e.keyCode === 13) { // Enter
+                    if (currentFocus > -1) {
+                        if (items[currentFocus]) items[currentFocus].click();
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            function addActive(items) {
+                if (!items) return false;
+                removeActive(items);
+                if (currentFocus >= items.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (items.length - 1);
+                items[currentFocus].classList.add('active');
+                items[currentFocus].scrollIntoView({ block: 'nearest' });
+            }
+
+            function removeActive(items) {
+                for (let i = 0; i < items.length; i++) {
+                    items[i].classList.remove('active');
+                }
+            }
+
+            // 외부 클릭 시 닫기
+            document.addEventListener('mousedown', function (e) {
+                if (e.target !== qtModelInput && !qtModelList.contains(e.target)) {
+                    qtModelList.style.display = 'none';
+                }
+                if (e.target !== ihModelInput && !ihModelList.contains(e.target)) {
+                    ihModelList.style.display = 'none';
+                }
+            });
+
+            /* 인하우스 모델 자동완성 로직 추가 */
+            const ihModelInput = document.getElementById('ih-model');
+            const ihModelList = document.getElementById('ih-model-list');
+            let ihFocus = -1;
+
+            ihModelInput.addEventListener('input', function () {
+                const val = this.value.toUpperCase();
+                ihModelList.innerHTML = '';
+                ihFocus = -1;
+
+                if (!val || val.length < 1) {
+                    ihModelList.style.display = 'none';
+                    return;
+                }
+
+                const models = Object.keys(keysDB).filter(m => m.toUpperCase().includes(val));
+
+                if (models.length === 0) {
+                    ihModelList.style.display = 'none';
+                    return;
+                }
+
+                models.forEach((m, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    const regex = new RegExp(`(${val})`, 'gi');
+                    item.innerHTML = m.replace(regex, '<span class="autocomplete-highlight">$1</span>');
+
+                    item.addEventListener('click', function () {
+                        ihModelInput.value = m;
+                        ihModelList.style.display = 'none';
+                        document.getElementById('ih-serial').focus();
+                    });
+                    ihModelList.appendChild(item);
+                });
+
+                ihModelList.style.display = 'block';
+            });
+
+            ihModelInput.addEventListener('keydown', function (e) {
+                const items = ihModelList.getElementsByClassName('autocomplete-item');
+                if (e.keyCode === 40) { // Down
+                    ihFocus++;
+                    addActiveCustom(items, ihFocus, (idx) => { ihFocus = idx; });
+                } else if (e.keyCode === 38) { // Up
+                    ihFocus--;
+                    addActiveCustom(items, ihFocus, (idx) => { ihFocus = idx; });
+                } else if (e.keyCode === 13) { // Enter
+                    if (ihFocus > -1) {
+                        if (items[ihFocus]) items[ihFocus].click();
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            function addActiveCustom(items, focusIdx, setFocus) {
+                if (!items) return false;
+                removeActive(items);
+                let idx = focusIdx;
+                if (idx >= items.length) idx = 0;
+                if (idx < 0) idx = (items.length - 1);
+                setFocus(idx);
+                items[idx].classList.add('active');
+                items[idx].scrollIntoView({ block: 'nearest' });
+            }
+        </script>
+</body>
+
+</html>
