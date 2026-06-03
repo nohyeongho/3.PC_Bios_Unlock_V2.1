@@ -1612,8 +1612,22 @@
 
                         let finalGuideUrl = (dynamicUrl && dynamicUrl.length > 5) ? dynamicUrl : PEGA_GUIDE_URL;
 
-                        if (finalGuideUrl.includes("drive.google.com") && finalGuideUrl.includes("/view")) {
-                            finalGuideUrl = finalGuideUrl.replace(/\/view.*/, "/preview");
+                        if (finalGuideUrl.includes("drive.google.com")) {
+                            let fileId = "";
+                            if (finalGuideUrl.includes("/file/d/")) {
+                                const parts = finalGuideUrl.split("/file/d/");
+                                if (parts[1]) {
+                                    fileId = parts[1].split("/")[0].split("?")[0];
+                                }
+                            } else if (finalGuideUrl.includes("id=")) {
+                                const matches = finalGuideUrl.match(/id=([^&]+)/);
+                                if (matches && matches[1]) {
+                                    fileId = matches[1];
+                                }
+                            }
+                            if (fileId) {
+                                finalGuideUrl = `https://docs.google.com/viewer?url=https://drive.google.com/uc?export=download%26id=${fileId}&embedded=true`;
+                            }
                         }
 
                         pegaUrlEl.href = finalGuideUrl;
