@@ -57,7 +57,8 @@
             right: 14px;
             width: 30px;
             height: 30px;
-            background: #eeeeee;
+            /* 사용자의 명시적인 디자인 요구사항에 맞추어, 헤더 우측 상단에 위치한 X 닫기 버튼이 주변 레이아웃과 더 깔끔하게 조화를 이룰 수 있도록 배경색을 흰색(#ffffff)으로 지정합니다. */
+            background: #ffffff;
             border: none;
             border-radius: 50%;
             cursor: pointer;
@@ -1019,7 +1020,7 @@
                         </div>
                         <div class="field" style="position: relative;">
                             <label>모델명 *</label>
-                            <input type="text" id="ih-model" placeholder="정확한 모델을 필히 선택하세요." autocomplete="off">
+                            <input type="text" id="ih-model" placeholder="자동완성 모델을 선택해 주세요." autocomplete="off">
                             <div id="ih-model-list" class="autocomplete-container"></div>
                         </div>
                         <div class="field">
@@ -1091,7 +1092,7 @@
                         </div>
                         <div class="field" style="position: relative;">
                             <label>모델명 *</label>
-                            <input type="text" id="qt-model" placeholder="추천 모델을 필히 선택하세요" autocomplete="off">
+                            <input type="text" id="qt-model" placeholder="자동완성 모델을 선택해 주세요." autocomplete="off">
                             <div id="qt-model-list" class="autocomplete-container"></div>
                         </div>
                         <div class="field">
