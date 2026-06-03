@@ -57,7 +57,6 @@
             right: 14px;
             width: 30px;
             height: 30px;
-            /* 사용자의 명시적인 디자인 요구사항에 맞추어, 헤더 우측 상단에 위치한 X 닫기 버튼이 주변 레이아웃과 더 깔끔하게 조화를 이룰 수 있도록 배경색을 흰색(#ffffff)으로 지정합니다. */
             background: #ffffff;
             border: none;
             border-radius: 50%;
@@ -1139,18 +1138,11 @@
                             </div>
                         </div>
 
-                        <!-- 
-                          [의도] QuantaDB에서 조회한 결과 중 특정 PEGA 모델인 경우, 작업자가 메인보드 이미지를 직관적으로 볼 수 있게 렌더링하는 영역입니다.
-                          이미지 로드에 실패하여 엑스박스(broken image)가 뜨는 시각적 결함을 방지하기 위해 onerror 시 즉시 숨김(display: none) 처리하는 예외 처리를 추가했습니다.
-                        -->
                         <div id="qt-img-wrap" style="margin-top: 14px; display: none; text-align: center;">
                             <div class="ilabel" style="text-align: left; margin-bottom: 6px;">BOARD IMAGE</div>
                             <img id="qt-img" src="" alt="Board Image" onerror="document.getElementById('qt-img-wrap').style.display='none';" style="max-width: 100%; border-radius: 8px; border: 1.5px solid #ebebeb; padding: 4px; background: #fafafa;">
                         </div>
 
-                        <!-- 
-                          [의도] QUANTA KEY 결과가 'PEGA'로 판정되었을 때, 단순 언락 코드 제공에 그치지 않고 추가적인 수리 매뉴얼과 절차 안내 링크를 표출하기 위한 안내판 영역입니다.
-                        -->
                         <div id="qt-pega-guide" style="margin-top: 14px; display: none; background: #fff0f2; border: 1px solid #ffc5cf; border-radius: 12px; padding: 14px; font-size: 13px; color: #A50034; text-align: left; box-shadow: 0 4px 12px rgba(165, 0, 52, 0.03);">
                             <div style="font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
                                 ⚠️ 수리가이드를 확인하세요
@@ -1202,31 +1194,18 @@
 
 
 
-            /* 외부 데이터베이스 (인증 후 구글 시트에서 로드) */
             let keysDB = {};
             let hexDB = {};
             let qtDB = {};
-            let qtPegaUrls = {}; // [의도] 구글 시트 API를 통해 받아올 PEGA 수리가이드 URL 컬렉션을 담기 위한 전역 매핑 변수입니다.
+            let qtPegaUrls = {};
 
-            /*
-              [의도] QuantaDB에서 조회한 결과 중 특정 PEGA 모델들의 메인보드 이미지(구글 드라이브 업로드본) 파일 ID를 매핑하는 객체입니다.
-              사용자가 향후 새로운 PEGA 모델과 이미지 주소를 손쉽게 관리할 수 있도록 모델명(Key)과 구글 드라이브 파일 ID(Value)로 구성된 구조로 선언합니다.
-            */
             const pegaImages = {
-                "14T30Q": "12345_SAMPLE_A_ID", // 예: 14T30Q 모델 선택 시 A이미지 파일 ID
-                "14T90S": "67890_SAMPLE_B_ID"  // 예: 14T90S 모델 선택 시 B이미지 파일 ID
+                "14T30Q": "12345_SAMPLE_A_ID",
+                "14T90S": "67890_SAMPLE_B_ID"
             };
 
-            /*
-              [의도] QUANTA KEY 매칭 결과가 "PEGA"인 경우 화면에 표출할 수리가이드 문서의 URL 링크입니다.
-              나중에 주소가 변경되었을 때 개발 지식이 부족한 사람도 이곳의 링크만 수정하면 전체 동작이 갱신될 수 있도록 상수로 격리하여 선언합니다.
-            */
             const PEGA_GUIDE_URL = "https://drive.google.com/file/d/1SAMPLE_PEGA_GUIDE_FILE_ID/view?usp=sharing";
 
-            /* 
-              [의도] 구글 스프레드시트와 백엔드 API 통신(인증 검사 및 통합 DB 로드)을 수행하는 웹 앱의 실시간 배포 URL 주소입니다.
-              사용자가 구글 앱스 스크립트(GAS)를 수정 후 신규 배포함에 따라 최신 API Endpoint 주소로 갱신하여 연동합니다.
-            */
             const AUTH_API_URL = "https://script.google.com/macros/s/AKfycbw3r2xKsyv_I4lFeZ6WiWOEXZ5EHvjgs1fehBaCS7fIW2Nv_KhrOt0SUI3LUyOehz4iwQ/exec";
 
             let isAuthenticated = false;
@@ -1247,18 +1226,16 @@
                     authBtn.textContent = '인증 중...';
                     authBtn.disabled = true;
 
-                    // 구글 시트 API 호출
                     const response = await fetch(`${AUTH_API_URL}?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
                     const result = await response.json();
 
                     if (result.success) {
                         isAuthenticated = true;
 
-                        // 구글 시트에서 가져온 DB 데이터 저장
                         if (result.keysDB) keysDB = result.keysDB;
                         if (result.hexDB) hexDB = result.hexDB;
                         if (result.qtDB) qtDB = result.qtDB;
-                        if (result.qtPegaUrls) qtPegaUrls = result.qtPegaUrls; // [의도] API 통신 결과 데이터 내의 PEGA 수리가이드 URL 컬렉션을 클라이언트 전역 변수에 바인딩합니다.
+                        if (result.qtPegaUrls) qtPegaUrls = result.qtPegaUrls;
 
                         document.getElementById('main-content').classList.remove('auth-locked');
                         document.getElementById('main-content').classList.add('auth-unlocked');
@@ -1283,7 +1260,6 @@
                 }
             }
 
-            // 미인증 상태에서 클릭 시 안내 팝업
             document.addEventListener('mousedown', function (e) {
                 if (!isAuthenticated) {
                     const mainContent = document.getElementById('main-content');
@@ -1294,7 +1270,6 @@
                 }
             }, true);
 
-            /* 피드백 처리 */
             function handleFeedback(panel, type) {
                 if (!isAuthenticated) {
                     alert('인증 후에 피드백을 남길 수 있습니다.');
@@ -1313,7 +1288,6 @@
                 }
             }
 
-            // 현재 선택된 피드백 상태 가져오기
             function getCurrentFeedback() {
                 const activePanel = document.getElementById('btn-ih').classList.contains('active') ? 'ih' : 'qt';
                 if (document.getElementById(activePanel + '-btn-like').classList.contains('active-like')) return '좋아요';
@@ -1600,11 +1574,6 @@
                     document.getElementById('qt-rkey').textContent = matched;
                     document.getElementById('qt-res').style.display = 'block';
 
-                    /*
-                      [의도] 조회된 모델이 pegaImages(PEGA 유형 모델 이미지 데이터베이스)에 등록되어 있는 경우,
-                      구글 드라이브에 저장된 해당 보드 이미지의 고유 ID를 가져와 직접 출력 링크로 가공 후 화면에 보여줍니다.
-                      사용자가 14T30Q-G.AR56K 와 같이 접미사가 포함된 모델명을 입력하는 예외 상황을 고려하여 부분 일치 기법(includes)을 사용해 유연하게 조회합니다.
-                    */
                     const cleanModel = model.toUpperCase().trim();
                     const imgWrap = document.getElementById('qt-img-wrap');
                     const imgEl = document.getElementById('qt-img');
@@ -1612,7 +1581,6 @@
 
                     for (const targetModel in pegaImages) {
                         const targetUpper = targetModel.toUpperCase().trim();
-                        // 입력된 모델명에 매핑 키가 포함되어 있거나, 매핑 키에 입력 모델명이 포함되어 있는지 하이브리드 검사 수행
                         if (cleanModel.includes(targetUpper) || targetUpper.includes(cleanModel)) {
                             const fileId = pegaImages[targetModel];
                             imgEl.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
@@ -1623,16 +1591,10 @@
                     }
 
                     if (!hasPegaImage) {
-                        // 일치하는 PEGA 이미지가 없을 경우에는 이미지 영역을 숨기고 초기화하여 시각적 오류를 방지합니다.
                         imgWrap.style.display = 'none';
                         imgEl.src = '';
                     }
 
-                    /*
-                      [의도] 매칭된 QUANTA KEY 결과가 "PEGA"일 때, 화면에 수리가이드 확인 경고 박스와 함께 URL 링크를 표출합니다.
-                      이때 하드코딩된 상수가 아니라, 구글 스프레드시트에서 실시간으로 받아온 동적 URL(qtPegaUrls)을 매핑하여 보여줍니다.
-                      만약 구글 시트에 주소가 누락된 예외 상황이 발생한다면 기본 정의된 폴더 주소(PEGA_GUIDE_URL)를 대체제로 제공합니다.
-                    */
                     const isPegaKey = (matched.toUpperCase().trim() === 'PEGA');
                     const pegaGuideEl = document.getElementById('qt-pega-guide');
                     const pegaUrlEl = document.getElementById('qt-pega-url');
@@ -1640,7 +1602,6 @@
                     if (isPegaKey) {
                         let dynamicUrl = null;
                         
-                        // 부분 일치를 통해 qtPegaUrls 내에서 가장 적합한 모델 키를 매칭하여 URL을 획득합니다.
                         for (const mKey in qtPegaUrls) {
                             const keyUpper = mKey.toUpperCase().trim();
                             if (cleanModel.includes(keyUpper) || keyUpper.includes(cleanModel)) {
@@ -1649,8 +1610,11 @@
                             }
                         }
 
-                        // 구글 시트 상 데이터가 비어있거나 누락된 오류 상황을 방지하기 위한 예외적 fallback URL(백업 상수)을 사용합니다.
-                        const finalGuideUrl = (dynamicUrl && dynamicUrl.length > 5) ? dynamicUrl : PEGA_GUIDE_URL;
+                        let finalGuideUrl = (dynamicUrl && dynamicUrl.length > 5) ? dynamicUrl : PEGA_GUIDE_URL;
+
+                        if (finalGuideUrl.includes("drive.google.com") && finalGuideUrl.includes("/view")) {
+                            finalGuideUrl = finalGuideUrl.replace(/\/view.*/, "/preview");
+                        }
 
                         pegaUrlEl.href = finalGuideUrl;
                         pegaUrlEl.textContent = finalGuideUrl;
@@ -1659,7 +1623,6 @@
                         pegaGuideEl.style.display = 'none';
                     }
 
-                    /* 이력 저장 */
                     saveLog({ type: '퀀타', model, receipt, serial, extra: 'QC OK', key: matched });
                 } else {
                     showErr('qt', `매칭 실패: '${prefix}'에 해당하는 퀀타 언락키가 등록되어 있지 않습니다.`);
